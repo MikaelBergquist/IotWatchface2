@@ -43,7 +43,7 @@ import java.lang.ref.WeakReference;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
-//GIT test
+//bad wolf
 
 /**
  * Analog watch face with a ticking second hand. In ambient mode, the second hand isn't shown. On
