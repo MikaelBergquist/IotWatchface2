@@ -43,6 +43,8 @@ import java.lang.ref.WeakReference;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
+//GIT test
+
 /**
  * Analog watch face with a ticking second hand. In ambient mode, the second hand isn't shown. On
  * devices with low-bit ambient mode, the hands are drawn without anti-aliasing in ambient mode.
@@ -330,7 +332,8 @@ public class IotWatchFace extends CanvasWatchFaceService  {
         }
 
         @Override
-        public void onAccuracyChanged(Sensor sensor, int i) {
+        public void onAccuracyChanged(
+                Sensor sensor, int i) {
 
         }
 
