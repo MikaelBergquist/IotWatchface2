@@ -44,7 +44,8 @@ public SensorUpdater (Float azimuth, Context mContext){
         mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
         mSensorManager.registerListener(this, mSensor, SensorManager.SENSOR_DELAY_NORMAL);
-//        mSensorManager.unregisterListener(this);
+        mSensorManager.unregisterListener(this);
+        azimuth = (float) 7.0;
     }
 
 

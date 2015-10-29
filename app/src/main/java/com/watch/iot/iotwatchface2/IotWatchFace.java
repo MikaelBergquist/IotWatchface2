@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
  * Analog watch face with a ticking second hand. In ambient mode, the second hand isn't shown. On
  * devices with low-bit ambient mode, the hands are drawn without anti-aliasing in ambient mode.
  */
-public class IotWatchFace extends CanvasWatchFaceService {
+public class IotWatchFace extends CanvasWatchFaceService  {
     /**
      * Update rate in milliseconds for interactive mode. We update once a second to advance the
      * second hand.
@@ -64,7 +64,7 @@ public class IotWatchFace extends CanvasWatchFaceService {
         return new Engine();
     }
 
-    private class Engine extends CanvasWatchFaceService.Engine {
+    private class Engine extends CanvasWatchFaceService.Engine implements SensorEventListener {
         Paint mBackgroundPaint;
         Paint mHandPaint;
         boolean mAmbient;
@@ -78,7 +78,7 @@ public class IotWatchFace extends CanvasWatchFaceService {
 
 
 
-        private Float azimuth;
+
 
 
         final Handler mUpdateTimeHandler = new EngineHandler(this);
@@ -91,6 +91,20 @@ public class IotWatchFace extends CanvasWatchFaceService {
             }
         };
         boolean mRegisteredTimeZoneReceiver = false;
+
+        /*
+            Kod som egentligen skall flyttas till SensorUpdater
+         */
+        //Sensorvariabler
+        private SensorManager mSensorManager;
+        private Sensor mSensor;
+
+        //Variabler för att komma ihåg sensordata
+        private float[] rMat;
+        private float[] orientation;
+
+        //azimuth som skall uppdateras
+        private Float azimuth;
 
         /**
          * Whether the display supports fewer bits for each color in ambient mode. When true, we
@@ -123,11 +137,13 @@ public class IotWatchFace extends CanvasWatchFaceService {
 
 
             azimuth = new Float(0);
-            new SensorUpdater(azimuth, getApplicationContext()).start();
+            //new SensorUpdater(azimuth, getApplicationContext()).start();
 
+            mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+            mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
 
-
-
+            orientation = new float[3];
+            rMat = new float[9];
 
 
             mTime = new Time();
@@ -252,6 +268,8 @@ public class IotWatchFace extends CanvasWatchFaceService {
             IotWatchFace.this.registerReceiver(mTimeZoneReceiver, filter);
 
             //Registrerar sensor listener
+            mSensorManager.registerListener(this, mSensor, SensorManager.SENSOR_DELAY_NORMAL);
+
         }
 
         private void unregisterReceiver() {
@@ -262,6 +280,7 @@ public class IotWatchFace extends CanvasWatchFaceService {
             IotWatchFace.this.unregisterReceiver(mTimeZoneReceiver);
 
             //Avregistrerar sensor lyssnaren
+            mSensorManager.unregisterListener(this);
         }
 
         /**
@@ -298,6 +317,22 @@ public class IotWatchFace extends CanvasWatchFaceService {
         /*
             Metoder för sensordata
          */
+
+        @Override
+        public void onSensorChanged(SensorEvent sensorEvent) {
+            if( sensorEvent.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR ){
+//                 calculate th rotation matrix
+                SensorManager.getRotationMatrixFromVector(rMat, sensorEvent.values);
+//                 get the azimuth value (orientation[0]) in degree
+
+                azimuth = (float)( Math.toDegrees( SensorManager.getOrientation( rMat, orientation )[0] ) + 360 ) % 360;
+            }
+        }
+
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int i) {
+
+        }
 
     }
 
