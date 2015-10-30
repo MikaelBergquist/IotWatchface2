@@ -25,6 +25,8 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
@@ -40,6 +42,7 @@ import android.text.format.Time;
 import android.view.SurfaceHolder;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
@@ -49,7 +52,9 @@ import java.util.concurrent.TimeUnit;
  * Analog watch face with a ticking second hand. In ambient mode, the second hand isn't shown. On
  * devices with low-bit ambient mode, the hands are drawn without anti-aliasing in ambient mode.
  */
-public class IotWatchFace extends CanvasWatchFaceService  {
+public class
+
+        IotWatchFace extends CanvasWatchFaceService  {
     /**
      * Update rate in milliseconds for interactive mode. We update once a second to advance the
      * second hand.
@@ -69,9 +74,13 @@ public class IotWatchFace extends CanvasWatchFaceService  {
     private class Engine extends CanvasWatchFaceService.Engine implements SensorEventListener {
         Paint mBackgroundPaint;
         Paint mHandPaint;
+        Paint ctrlButtonPaint;
         boolean mAmbient;
         Time mTime;
-
+        //en lista för gadgets
+        private ArrayList<Gadget> gadgetList;
+        //sätts till true när en gadget är i fokus klockan 12
+        private boolean gadgetInFocus;
 
         //Bitmaps för bakgrunden
         Bitmap mBackgroundBitmap;
@@ -137,6 +146,14 @@ public class IotWatchFace extends CanvasWatchFaceService  {
             mHandPaint.setAntiAlias(true);
             mHandPaint.setStrokeCap(Paint.Cap.ROUND);
 
+            //paint till control-knappen
+            ctrlButtonPaint = new Paint();
+            ctrlButtonPaint.setColor(resources.getColor(R.color.controlButton));
+            ctrlButtonPaint.setStrokeWidth(resources.getDimension(R.dimen.controlButtonStroke));
+            ctrlButtonPaint.setAntiAlias(true);
+            ctrlButtonPaint.setStyle(Paint.Style.STROKE);
+            ctrlButtonPaint.setTextSize(20);
+            ctrlButtonPaint.setTextAlign(Paint.Align.CENTER);
 
             azimuth = new Float(0);
             //new SensorUpdater(azimuth, getApplicationContext()).start();
@@ -149,6 +166,13 @@ public class IotWatchFace extends CanvasWatchFaceService  {
 
 
             mTime = new Time();
+            //en lista med några lampor (gadget(type,id,xpos,ypos))
+            gadgetList=new ArrayList<Gadget>();
+            gadgetList.add(new Gadget(1,1,0,3));
+            gadgetList.add(new Gadget(1,2,3,3));
+            gadgetList.add(new Gadget(1,3,-4,-4));
+
+
         }
 
         @Override
@@ -196,6 +220,8 @@ public class IotWatchFace extends CanvasWatchFaceService  {
 //            canvas.drawRect(0, 0, canvas.getWidth(), canvas.getHeight(), mBackgroundPaint);
             canvas.drawBitmap(mBackgroundScaledBitmap, 0, 0, null);
 
+            //ritar upp control knapp
+
 
             // Find the center. Ignore the window insets so that, on round watches with a
             // "chin", the watch face is centered on the entire screen, not just the usable
@@ -212,7 +238,14 @@ public class IotWatchFace extends CanvasWatchFaceService  {
             float minLength = centerX - 40;
             float hrLength = centerX - 80;
 
+
+            canvas.drawText("" + azimuth, centerX, centerY + 110, ctrlButtonPaint);
+            //ritar upp control knapp
+            canvas.drawRoundRect(new RectF(centerX-55,centerY+38,centerX+55,centerY+78), 6, 6, ctrlButtonPaint);
+            canvas.drawText("Control", centerX, centerY + 65, ctrlButtonPaint);
+
             if (!mAmbient) {
+
                 float secX = (float) Math.sin(secRot) * secLength;
                 float secY = (float) -Math.cos(secRot) * secLength;
                 canvas.drawLine(centerX, centerY, centerX + secX, centerY + secY, mHandPaint);
@@ -226,9 +259,9 @@ public class IotWatchFace extends CanvasWatchFaceService  {
             float hrY = (float) -Math.cos(hrRot) * hrLength;
             canvas.drawLine(centerX, centerY, centerX + hrX, centerY + hrY, mHandPaint);
 
-            canvas.drawText("" + azimuth, centerX, centerY + 80, mHandPaint);
 
         }
+
 
         @Override
         public void onSurfaceChanged(
