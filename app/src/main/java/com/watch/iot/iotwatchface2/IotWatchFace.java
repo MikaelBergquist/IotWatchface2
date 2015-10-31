@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
@@ -72,9 +73,8 @@ public class
     }
 
     private class Engine extends CanvasWatchFaceService.Engine implements SensorEventListener {
-        Paint mBackgroundPaint;
-        Paint mHandPaint;
-        Paint ctrlButtonPaint;
+        Paint mBackgroundPaint,mHandPaint,ctrlButtonPaint,mIconPaint;
+
         boolean mAmbient;
         Time mTime;
         //en lista för gadgets
@@ -85,7 +85,7 @@ public class
         //Bitmaps för bakgrunden
         Bitmap mBackgroundBitmap;
         Bitmap mBackgroundScaledBitmap;
-
+        Bitmap mIconLampBitmap;
 
 
 
@@ -137,8 +137,16 @@ public class
             Drawable backgroundDrawable = resources.getDrawable(R.drawable.background_iot_watch, null);
             mBackgroundBitmap = ((BitmapDrawable) backgroundDrawable).getBitmap();
 
+            //ikoner till gadgets
+            Drawable mIconLampDrawable = resources.getDrawable(R.drawable.small_lightbulb_white, null);
+            mIconLampBitmap = ((BitmapDrawable) mIconLampDrawable).getBitmap();
+
+
+
+
             mBackgroundPaint = new Paint();
             mBackgroundPaint.setColor(resources.getColor(R.color.analog_background));
+
 
             mHandPaint = new Paint();
             mHandPaint.setColor(resources.getColor(R.color.analog_hands));
@@ -155,6 +163,10 @@ public class
             ctrlButtonPaint.setTextSize(20);
             ctrlButtonPaint.setTextAlign(Paint.Align.CENTER);
 
+            mIconPaint= new Paint();
+            mIconPaint.setFilterBitmap(true);
+            mIconPaint.setAntiAlias(true);
+
             azimuth = new Float(0);
             //new SensorUpdater(azimuth, getApplicationContext()).start();
 
@@ -170,7 +182,10 @@ public class
             gadgetList=new ArrayList<Gadget>();
             gadgetList.add(new Gadget(1,1,0,3));
             gadgetList.add(new Gadget(1,2,3,3));
-            gadgetList.add(new Gadget(1,3,-4,-4));
+            gadgetList.add(new Gadget(1,3,3,0));
+
+            gadgetList.add(new Gadget(1,4,-2,-3));
+            gadgetList.add(new Gadget(1,5,0,-4));
 
 
         }
@@ -239,10 +254,18 @@ public class
             float hrLength = centerX - 80;
 
 
-            canvas.drawText("" + azimuth, centerX, centerY + 110, ctrlButtonPaint);
+            canvas.drawText("" + azimuth, centerX, centerY + 30, ctrlButtonPaint);
             //ritar upp control knapp
             canvas.drawRoundRect(new RectF(centerX-55,centerY+38,centerX+55,centerY+78), 6, 6, ctrlButtonPaint);
             canvas.drawText("Control", centerX, centerY + 65, ctrlButtonPaint);
+
+            //ritar upp ikoner
+            for (Gadget g : gadgetList) {
+                float[] coords = getDrawingCoords((float) g.angle, height);
+                  canvas.drawBitmap(mIconLampBitmap, coords[0], coords[1], mIconPaint);
+            }
+      
+
 
             if (!mAmbient) {
 
@@ -258,7 +281,6 @@ public class
             float hrX = (float) Math.sin(hrRot) * hrLength;
             float hrY = (float) -Math.cos(hrRot) * hrLength;
             canvas.drawLine(centerX, centerY, centerX + hrX, centerY + hrY, mHandPaint);
-
 
         }
 
@@ -370,7 +392,27 @@ public class
 
         }
 
+        /*@in en vinkel för var en gadget
+          @ut x,y i en int-vektor
+        */
+        private float[] getDrawingCoords(float angle, int height) {
+            angle=angle-azimuth; //<-TA BORT SÅ LÄNGE OM DET LAGGAR
+            float minlimit = 40;
+            float maxlimit = height-40;
+            float centre = height/2;
+            float x = (centre * (float) Math.cos(angle))*0.87f-18; //0.87f=marginal från kanten, -18 för centrera bitmap i koordinat
+            float y = (centre * (float) Math.sin(angle))*0.87f+18;
+            x=x+centre; //vi vill ha positiva koordinater
+            y=y+centre;
+            if (x>maxlimit) x=maxlimit-18;
+            if (y>maxlimit) y=maxlimit+18;
+            if (y<minlimit) y=minlimit+18;
+            if (x<minlimit) x=minlimit-18;
+            return new float[] {x,height-y};
+        }
     }
+
+
 
     private static class EngineHandler extends Handler {
         private final WeakReference<IotWatchFace.Engine> mWeakReference;
