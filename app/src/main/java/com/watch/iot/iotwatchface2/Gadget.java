@@ -14,12 +14,12 @@ public class Gadget {
     public double angle;
 
 
-    public Gadget(int type, int id, double xPosInRoom, double yPosInRoom) {
+    public Gadget(int type, int id, double xPosInRoom, double yPosInRoom) { //ID=-1 reserverat för null-objekt
         this.type=type;
         this.id=id;
         this.xPosInRoom=xPosInRoom;
         this.yPosInRoom=yPosInRoom;
-        this.angle=Math.atan2(yPosInRoom,xPosInRoom);
+        this.angle=Math.atan2(this.yPosInRoom,this.xPosInRoom)-Math.PI/2; //radians from north
 
     }
 

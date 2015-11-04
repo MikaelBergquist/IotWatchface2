@@ -22,12 +22,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.RectF;
-import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
@@ -41,13 +38,10 @@ import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.text.format.Time;
 import android.view.SurfaceHolder;
-
+import android.os.Vibrator;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
-
-//bad wolf2
 
 /**
  * Analog watch face with a ticking second hand. In ambient mode, the second hand isn't shown. On
@@ -81,17 +75,18 @@ public class
         Time mTime;
         //en lista för gadgets
         private ArrayList<Gadget> gadgetList;
-        //sätts till true när en gadget är i fokus klockan 12
-        private boolean gadgetInFocus;
+        //sätts till gadgetId när engadget  är i fokus klockan 12
+        private int gadgetInFocus,lastGadgetInFocus;
 
-        //Bitmaps för bakgrunden
-        Bitmap mBackgroundBitmap;
+        //Bitmaps för bakgrunden o ikonerna
+        Bitmap mBackgroundNoFocusBitmap;
+        Bitmap mBackgroundInFocusBitmap;
+        Bitmap mBackgroundActiveBitmap;
         Bitmap mBackgroundScaledBitmap;
         Bitmap mIconLampBitmap;
+        Bitmap mIconLampFocusBitmap;
 
-
-
-
+        private Vibrator v;
 
 
         final Handler mUpdateTimeHandler = new EngineHandler(this);
@@ -119,6 +114,9 @@ public class
         //azimuth som skall uppdateras
         private Float azimuth;
 
+        //gränser för när en gadget är i fokus
+        private float focusTolerance = (float) PI/16;
+
         /**
          * Whether the display supports fewer bits for each color in ambient mode. When true, we
          * disable anti-aliasing in ambient mode.
@@ -136,19 +134,20 @@ public class
                     .build());
 
             Resources resources = IotWatchFace.this.getResources();
-            Drawable backgroundDrawable = resources.getDrawable(R.drawable.background_iot_watch, null);
-            mBackgroundBitmap = ((BitmapDrawable) backgroundDrawable).getBitmap();
+            Drawable backgroundNoFocusDrawable = resources.getDrawable(R.drawable.background_no_focus, null);
+            mBackgroundNoFocusBitmap = ((BitmapDrawable) backgroundNoFocusDrawable).getBitmap();
+            Drawable backgroundInFocusDrawable = resources.getDrawable(R.drawable.background_in_focus, null);
+            mBackgroundInFocusBitmap = ((BitmapDrawable) backgroundInFocusDrawable).getBitmap();
+            mBackgroundActiveBitmap=mBackgroundNoFocusBitmap;
 
             //ikoner till gadgets
             Drawable mIconLampDrawable = resources.getDrawable(R.drawable.small_lightbulb_white, null);
             mIconLampBitmap = ((BitmapDrawable) mIconLampDrawable).getBitmap();
-
-
-
+            Drawable mIconLampFocusDrawable = resources.getDrawable(R.drawable.small_lightbulb_yellow, null);
+            mIconLampFocusBitmap = ((BitmapDrawable) mIconLampFocusDrawable).getBitmap();
 
             mBackgroundPaint = new Paint();
             mBackgroundPaint.setColor(resources.getColor(R.color.analog_background));
-
 
             mHandPaint = new Paint();
             mHandPaint.setColor(resources.getColor(R.color.analog_hands));
@@ -156,7 +155,8 @@ public class
             mHandPaint.setAntiAlias(true);
             mHandPaint.setStrokeCap(Paint.Cap.ROUND);
 
-            //paint till control-knappen
+
+           // paint till control-knappen
             ctrlButtonPaint = new Paint();
             ctrlButtonPaint.setColor(resources.getColor(R.color.controlButton));
             ctrlButtonPaint.setStrokeWidth(resources.getDimension(R.dimen.controlButtonStroke));
@@ -170,7 +170,6 @@ public class
             mIconPaint.setAntiAlias(true);
 
             azimuth = new Float(0);
-            //new SensorUpdater(azimuth, getApplicationContext()).start();
 
             mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
             mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
@@ -178,16 +177,15 @@ public class
             orientation = new float[3];
             rMat = new float[9];
 
-
             mTime = new Time();
             //en lista med några lampor (gadget(type,id,xpos,ypos))
             gadgetList=new ArrayList<Gadget>();
             gadgetList.add(new Gadget(1,1,0,3));
             gadgetList.add(new Gadget(1,2,3,3));
             gadgetList.add(new Gadget(1,3,3,0));
-
             gadgetList.add(new Gadget(1,4,-2,-3));
             gadgetList.add(new Gadget(1,5,0,-4));
+            v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
 
         }
@@ -235,9 +233,8 @@ public class
 
             // Draw the background.
 //            canvas.drawRect(0, 0, canvas.getWidth(), canvas.getHeight(), mBackgroundPaint);
-            canvas.drawBitmap(mBackgroundScaledBitmap, 0, 0, null);
-
-            //ritar upp control knapp
+            setActiveBackground(); //sätter rätt bakgrund beroende på gadgetInFocus
+            canvas.drawBitmap(mBackgroundActiveBitmap, 0, 0, null);
 
 
             // Find the center. Ignore the window insets so that, on round watches with a
@@ -258,15 +255,22 @@ public class
 
             canvas.drawText("" + (int)(Math.toDegrees(azimuth)), centerX, centerY + 30, ctrlButtonPaint);
             //ritar upp control knapp
-            canvas.drawRoundRect(new RectF(centerX-55,centerY+38,centerX+55,centerY+78), 6, 6, ctrlButtonPaint);
-            canvas.drawText("Control", centerX, centerY + 65, ctrlButtonPaint);
+           // canvas.drawRoundRect(new RectF(centerX-55,centerY+38,centerX+55,centerY+78), 6, 6, ctrlButtonPaint);
+           // canvas.drawText("Control", centerX, centerY + 65, ctrlButtonPaint);
 
-            //ritar upp ikoner
+            //ritar upp ikoner och sätter ev. gadgetInFocus=true
+            boolean tempInFocus= false; //ändras till true om nåt objekt blir i fokus nedan
             for (Gadget g : gadgetList) {
                 float[] coords = getDrawingCoords((float) g.angle, height);
-                  canvas.drawBitmap(mIconLampBitmap, coords[0], coords[1], mIconPaint);
+                if (isGadgetInFocus(g)) {
+                    tempInFocus = true;
+                    canvas.drawBitmap(mIconLampFocusBitmap, coords[0], coords[1], mIconPaint); //
+                } else {
+                    canvas.drawBitmap(mIconLampBitmap, coords[0], coords[1], mIconPaint);
+                }
             }
-      
+            if (tempInFocus==false) gadgetInFocus=-1; //gadgetId -1 är nullobjekt
+
 
 
             if (!mAmbient) {
@@ -293,7 +297,7 @@ public class
             if (mBackgroundScaledBitmap == null
                     || mBackgroundScaledBitmap.getWidth() != width
                     || mBackgroundScaledBitmap.getHeight() != height) {
-                mBackgroundScaledBitmap = Bitmap.createScaledBitmap(mBackgroundBitmap,
+                mBackgroundScaledBitmap = Bitmap.createScaledBitmap(mBackgroundActiveBitmap,
                         width, height, true /* filter */);
             }
             super.onSurfaceChanged(holder, format, width, height);
@@ -398,20 +402,42 @@ public class
           @ut x,y i en int-vektor
         */
         private float[] getDrawingCoords(float angle, int height) {
-            angle=-((angle-azimuth+2*PI)%(2*PI)); //<-TA BORT SÅ LÄNGE OM DET LAGGAR
-
+            angle=(azimuth-angle);
+           // Log.d("differens", "diff "+ angle);
             float minlimit = 40;
             float maxlimit = height-40;
             float centre = height/2;
-            float x = (centre * (float) Math.cos(angle))*0.87f-16; //0.87f=marginal från kanten, -18 för centrera bitmap i koordinat
-            float y = (centre * (float) Math.sin(angle))*0.87f+16;
+            float x = (centre * (float) Math.cos(angle+PI/2))*0.87f; //0.87f=marginal från kanten, -18 för centrera bitmap i koordinat
+            float y = (centre * (float) Math.sin(angle+PI/2))*0.87f;//+PI/2 eftersom vi har 0 grader i norr
             x=x+centre; //vi vill ha positiva koordinater
             y=y+centre;
-            if (x>maxlimit) x=maxlimit-16;
-            if (y>maxlimit) y=maxlimit+16;
-            if (y<minlimit) y=minlimit+16;
-            if (x<minlimit) x=minlimit-16;
-            return new float[] {x,height-y};
+            if (x>maxlimit) x=maxlimit;
+            if (y>maxlimit) y=maxlimit;
+            if (y<minlimit) y=minlimit;
+            if (x<minlimit) x=minlimit;
+            return new float[] {x-16,height-y-16};
+        }
+
+        private void setActiveBackground() {
+            if (gadgetInFocus==-1) {
+                mBackgroundActiveBitmap=mBackgroundNoFocusBitmap;
+            }
+            else {
+                mBackgroundActiveBitmap=mBackgroundInFocusBitmap;
+            }
+        }
+
+        private boolean isGadgetInFocus(Gadget g) {            //kolla om gadget är i fokus
+            if ((azimuth-g.angle)%(2*PI)<focusTolerance) {  //om i fokus: spara förra fokusobjektet
+                int tempId=g.id;
+                lastGadgetInFocus=gadgetInFocus;
+                if (lastGadgetInFocus!=tempId) {           //vibrera om fokusobjektet!=det förra
+                    v.vibrate(30);
+                }
+                gadgetInFocus=tempId;
+                return true;
+            }
+            return false;
         }
     }
 
@@ -435,5 +461,7 @@ public class
                 }
             }
         }
+
+
     }
 }
