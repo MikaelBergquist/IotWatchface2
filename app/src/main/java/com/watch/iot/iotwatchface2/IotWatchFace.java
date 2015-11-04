@@ -61,6 +61,8 @@ public class
      * second hand.
      */
     private static final long INTERACTIVE_UPDATE_RATE_MS = 10;
+    private static final float PI = (float) Math.PI;
+
 
     /**
      * Handler message id for updating the time periodically in interactive mode.
@@ -254,7 +256,7 @@ public class
             float hrLength = centerX - 80;
 
 
-            canvas.drawText("" + azimuth, centerX, centerY + 30, ctrlButtonPaint);
+            canvas.drawText("" + (int)(Math.toDegrees(azimuth)), centerX, centerY + 30, ctrlButtonPaint);
             //ritar upp control knapp
             canvas.drawRoundRect(new RectF(centerX-55,centerY+38,centerX+55,centerY+78), 6, 6, ctrlButtonPaint);
             canvas.drawText("Control", centerX, centerY + 65, ctrlButtonPaint);
@@ -325,7 +327,7 @@ public class
             IotWatchFace.this.registerReceiver(mTimeZoneReceiver, filter);
 
             //Registrerar sensor listener
-            mSensorManager.registerListener(this, mSensor, SensorManager.SENSOR_DELAY_NORMAL);
+            mSensorManager.registerListener(this, mSensor, SensorManager.SENSOR_DELAY_GAME);
 
         }
 
@@ -382,7 +384,7 @@ public class
                 SensorManager.getRotationMatrixFromVector(rMat, sensorEvent.values);
 //                 get the azimuth value (orientation[0]) in degree
 
-                azimuth = (float)( Math.toDegrees( SensorManager.getOrientation( rMat, orientation )[0] ) + 360 ) % 360;
+                azimuth = (( SensorManager.getOrientation( rMat, orientation )[0] ) + 2*PI ) % (2*PI);
             }
         }
 
@@ -396,7 +398,8 @@ public class
           @ut x,y i en int-vektor
         */
         private float[] getDrawingCoords(float angle, int height) {
-            angle=angle-azimuth; //<-TA BORT SÅ LÄNGE OM DET LAGGAR
+            angle=-((angle-azimuth+2*PI)%(2*PI)); //<-TA BORT SÅ LÄNGE OM DET LAGGAR
+
             float minlimit = 40;
             float maxlimit = height-40;
             float centre = height/2;
