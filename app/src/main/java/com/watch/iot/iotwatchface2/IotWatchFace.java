@@ -403,14 +403,14 @@ public class
             float minlimit = 40;
             float maxlimit = height-40;
             float centre = height/2;
-            float x = (centre * (float) Math.cos(angle))*0.87f-18; //0.87f=marginal från kanten, -18 för centrera bitmap i koordinat
-            float y = (centre * (float) Math.sin(angle))*0.87f+18;
+            float x = (centre * (float) Math.cos(angle))*0.87f-16; //0.87f=marginal från kanten, -18 för centrera bitmap i koordinat
+            float y = (centre * (float) Math.sin(angle))*0.87f+16;
             x=x+centre; //vi vill ha positiva koordinater
             y=y+centre;
-            if (x>maxlimit) x=maxlimit-18;
-            if (y>maxlimit) y=maxlimit+18;
-            if (y<minlimit) y=minlimit+18;
-            if (x<minlimit) x=minlimit-18;
+            if (x>maxlimit) x=maxlimit-16;
+            if (y>maxlimit) y=maxlimit+16;
+            if (y<minlimit) y=minlimit+16;
+            if (x<minlimit) x=minlimit-16;
             return new float[] {x,height-y};
         }
     }
