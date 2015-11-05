@@ -75,6 +75,7 @@ public class
         Time mTime;
         //en lista för gadgets
         private ArrayList<Gadget> gadgetList;
+        private Bitmap[] iconNoFocus, iconInFocus;
         //sätts till gadgetId när engadget  är i fokus klockan 12
         private int gadgetInFocus,lastGadgetInFocus;
 
@@ -85,6 +86,9 @@ public class
         Bitmap mBackgroundScaledBitmap;
         Bitmap mIconLampBitmap;
         Bitmap mIconLampFocusBitmap;
+        Bitmap mIconTvBitmap;
+        Bitmap mIconTvFocusBitmap;
+
 
         private Vibrator v;
 
@@ -141,10 +145,26 @@ public class
             mBackgroundActiveBitmap=mBackgroundNoFocusBitmap;
 
             //ikoner till gadgets
+            iconInFocus = new Bitmap[4];
+            iconNoFocus = new Bitmap[4];
+
             Drawable mIconLampDrawable = resources.getDrawable(R.drawable.small_lightbulb_white, null);
             mIconLampBitmap = ((BitmapDrawable) mIconLampDrawable).getBitmap();
+            iconNoFocus[0]= mIconLampBitmap;
+
             Drawable mIconLampFocusDrawable = resources.getDrawable(R.drawable.small_lightbulb_yellow, null);
             mIconLampFocusBitmap = ((BitmapDrawable) mIconLampFocusDrawable).getBitmap();
+            iconInFocus[0]= mIconLampFocusBitmap;
+
+            Drawable mIconTvDrawable = resources.getDrawable(R.drawable.small_tv_white, null);
+            mIconTvBitmap = ((BitmapDrawable) mIconTvDrawable).getBitmap();
+            iconNoFocus[1]= mIconTvBitmap;
+
+            Drawable mIconTvFocusDrawable = resources.getDrawable(R.drawable.small_tv_blue, null);
+            mIconTvFocusBitmap = ((BitmapDrawable) mIconTvFocusDrawable).getBitmap();
+            iconInFocus[1]= mIconTvFocusBitmap;
+
+
 
             mBackgroundPaint = new Paint();
             mBackgroundPaint.setColor(resources.getColor(R.color.analog_background));
@@ -180,11 +200,10 @@ public class
             mTime = new Time();
             //en lista med några lampor (gadget(type,id,xpos,ypos))
             gadgetList=new ArrayList<Gadget>();
-            gadgetList.add(new Gadget(1,1,0,3));
+            gadgetList.add(new Gadget(0,1,0,3));
             gadgetList.add(new Gadget(1,2,3,3));
-            gadgetList.add(new Gadget(1,3,3,0));
-            gadgetList.add(new Gadget(1,4,-2,-3));
-            gadgetList.add(new Gadget(1,5,0,-4));
+            gadgetList.add(new Gadget(0,3,3,0));
+            gadgetList.add(new Gadget(0,4,-2,-3));
             v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
 
@@ -264,9 +283,9 @@ public class
                 float[] coords = getDrawingCoords((float) g.angle, height);
                 if (isGadgetInFocus(g)) {
                     tempInFocus = true;
-                    canvas.drawBitmap(mIconLampFocusBitmap, coords[0], coords[1], mIconPaint); //
+                    canvas.drawBitmap(iconInFocus[g.type], coords[0], coords[1], mIconPaint); //
                 } else {
-                    canvas.drawBitmap(mIconLampBitmap, coords[0], coords[1], mIconPaint);
+                    canvas.drawBitmap(iconNoFocus[g.type], coords[0], coords[1], mIconPaint);
                 }
             }
             if (tempInFocus==false) gadgetInFocus=-1; //gadgetId -1 är nullobjekt
