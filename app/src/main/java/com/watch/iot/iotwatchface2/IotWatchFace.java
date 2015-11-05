@@ -69,7 +69,7 @@ public class
     }
 
     private class Engine extends CanvasWatchFaceService.Engine implements SensorEventListener {
-        Paint mBackgroundPaint,mHandPaint,ctrlButtonPaint,mIconPaint;
+        Paint mBackgroundPaint,mHourHandPaint,mMinuteHandPaint,mSecondHandPaint,ctrlButtonPaint,mIconPaint;
 
         boolean mAmbient;
         Time mTime;
@@ -169,11 +169,24 @@ public class
             mBackgroundPaint = new Paint();
             mBackgroundPaint.setColor(resources.getColor(R.color.analog_background));
 
-            mHandPaint = new Paint();
-            mHandPaint.setColor(resources.getColor(R.color.analog_hands));
-            mHandPaint.setStrokeWidth(resources.getDimension(R.dimen.analog_hand_stroke));
-            mHandPaint.setAntiAlias(true);
-            mHandPaint.setStrokeCap(Paint.Cap.ROUND);
+            mHourHandPaint = new Paint();
+            mHourHandPaint.setColor(resources.getColor(R.color.analog_hands));
+            mHourHandPaint.setStrokeWidth(resources.getDimension(R.dimen.analog_hour_hand_stroke));
+            mHourHandPaint.setAntiAlias(true);
+            mHourHandPaint.setStrokeCap(Paint.Cap.ROUND);
+
+            mMinuteHandPaint = new Paint();
+            mMinuteHandPaint.setColor(resources.getColor(R.color.analog_hands));
+            mMinuteHandPaint.setStrokeWidth(resources.getDimension(R.dimen.analog_minute_hand_stroke));
+            mMinuteHandPaint.setAntiAlias(true);
+            mMinuteHandPaint.setStrokeCap(Paint.Cap.ROUND);
+
+            mSecondHandPaint = new Paint();
+            mSecondHandPaint.setColor(resources.getColor(R.color.analog_hands));
+            mSecondHandPaint.setStrokeWidth(resources.getDimension(R.dimen.analog_second_hand_stroke));
+            mSecondHandPaint.setAntiAlias(true);
+            mSecondHandPaint.setStrokeCap(Paint.Cap.ROUND);
+
 
 
            // paint till control-knappen
@@ -233,7 +246,9 @@ public class
             if (mAmbient != inAmbientMode) {
                 mAmbient = inAmbientMode;
                 if (mLowBitAmbient) {
-                    mHandPaint.setAntiAlias(!inAmbientMode);
+                    mHourHandPaint.setAntiAlias(!inAmbientMode);
+                    mMinuteHandPaint.setAntiAlias(!inAmbientMode);
+
                 }
                 invalidate();
             }
@@ -267,9 +282,9 @@ public class
             float minRot = minutes / 30f * (float) Math.PI;
             float hrRot = ((mTime.hour + (minutes / 60f)) / 6f) * (float) Math.PI;
 
-            float secLength = centerX - 20;
-            float minLength = centerX - 40;
-            float hrLength = centerX - 80;
+            float secLength = centerX - 25;
+            float minLength = centerX - 50;
+            float hrLength = centerX - 90;
 
 
             canvas.drawText("" + (int)(Math.toDegrees(azimuth)), centerX, centerY + 30, ctrlButtonPaint);
@@ -296,16 +311,16 @@ public class
 
                 float secX = (float) Math.sin(secRot) * secLength;
                 float secY = (float) -Math.cos(secRot) * secLength;
-                canvas.drawLine(centerX, centerY, centerX + secX, centerY + secY, mHandPaint);
+                canvas.drawLine(centerX, centerY, centerX + secX, centerY + secY, mSecondHandPaint);
             }
 
             float minX = (float) Math.sin(minRot) * minLength;
             float minY = (float) -Math.cos(minRot) * minLength;
-            canvas.drawLine(centerX, centerY, centerX + minX, centerY + minY, mHandPaint);
+            canvas.drawLine(centerX, centerY, centerX + minX, centerY + minY, mMinuteHandPaint);
 
             float hrX = (float) Math.sin(hrRot) * hrLength;
             float hrY = (float) -Math.cos(hrRot) * hrLength;
-            canvas.drawLine(centerX, centerY, centerX + hrX, centerY + hrY, mHandPaint);
+            canvas.drawLine(centerX, centerY, centerX + hrX, centerY + hrY, mHourHandPaint);
 
         }
 

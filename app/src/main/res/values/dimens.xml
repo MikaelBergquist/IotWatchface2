@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="analog_hand_stroke">3dp</dimen>
+    <dimen name="analog_hour_hand_stroke">5dp</dimen>
+    <dimen name="analog_minute_hand_stroke">3dp</dimen>
+    <dimen name="analog_second_hand_stroke">1dp</dimen>
+
     <dimen name="controlButtonStroke">1dp</dimen>
 
 </resources>
