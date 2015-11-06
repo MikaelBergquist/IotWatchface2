@@ -37,6 +37,7 @@ import android.os.Message;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.text.format.Time;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.os.Vibrator;
 import java.lang.ref.WeakReference;
@@ -119,7 +120,7 @@ public class
         private Float azimuth;
 
         //gränser för när en gadget är i fokus
-        private float focusTolerance = (float) PI/16;
+        private float focusTolerance = (float) PI/24;
 
         /**
          * Whether the display supports fewer bits for each color in ambient mode. When true, we
@@ -214,7 +215,7 @@ public class
             //en lista med några lampor (gadget(type,id,xpos,ypos))
             gadgetList=new ArrayList<Gadget>();
             gadgetList.add(new Gadget(0,1,0,3));
-            gadgetList.add(new Gadget(1,2,3,3));
+           gadgetList.add(new Gadget(1,2,3,3));
             gadgetList.add(new Gadget(0,3,3,0));
             gadgetList.add(new Gadget(0,4,-2,-3));
             v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
@@ -461,8 +462,10 @@ public class
             }
         }
 
-        private boolean isGadgetInFocus(Gadget g) {            //kolla om gadget är i fokus
-            if ((azimuth-g.angle)%(2*PI)<focusTolerance) {  //om i fokus: spara förra fokusobjektet
+        private boolean isGadgetInFocus(Gadget g) {
+                   float diffAngle=(azimuth-(float)g.angle+2*PI)%(2*PI);//kolla om gadget är i fokus
+            if (diffAngle<focusTolerance||diffAngle>(2*PI-focusTolerance)) {  //om i fokus: spara förra fokusobjektet
+                //Log.d("gadgetinfocus", "azimuth= " + azimuth + " angle=" + g.angle+" diff="+(azimuth-g.angle+2*PI)%(2*PI));
                 int tempId=g.id;
                 lastGadgetInFocus=gadgetInFocus;
                 if (lastGadgetInFocus!=tempId) {           //vibrera om fokusobjektet!=det förra
