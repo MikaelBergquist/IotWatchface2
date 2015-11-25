@@ -25,6 +25,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
@@ -38,6 +39,7 @@ import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.text.format.Time;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.os.Vibrator;
 import java.lang.ref.WeakReference;
@@ -128,6 +130,8 @@ public class
          */
         boolean mLowBitAmbient;
 
+        boolean tempClicked; //ta bort
+
         @Override
         public void onCreate(SurfaceHolder holder) {
             super.onCreate(holder);
@@ -136,6 +140,8 @@ public class
                     .setCardPeekMode(WatchFaceStyle.PEEK_MODE_SHORT)
                     .setBackgroundVisibility(WatchFaceStyle.BACKGROUND_VISIBILITY_INTERRUPTIVE)
                     .setShowSystemUiTime(false)
+                    .setAcceptsTapEvents(true)
+
                     .build());
 
             Resources resources = IotWatchFace.this.getResources();
@@ -144,6 +150,8 @@ public class
             Drawable backgroundInFocusDrawable = resources.getDrawable(R.drawable.background_in_focus, null);
             mBackgroundInFocusBitmap = ((BitmapDrawable) backgroundInFocusDrawable).getBitmap();
             mBackgroundActiveBitmap=mBackgroundNoFocusBitmap;
+
+
 
             //ikoner till gadgets
             iconInFocus = new Bitmap[4];
@@ -288,9 +296,9 @@ public class
             float hrLength = centerX - 90;
 
 
-            canvas.drawText("" + (int)(Math.toDegrees(azimuth)), centerX, centerY + 30, ctrlButtonPaint);
+            //canvas.drawText("" + (int)(Math.toDegrees(azimuth)), centerX, centerY + 30, ctrlButtonPaint);
             //ritar upp control knapp
-           // canvas.drawRoundRect(new RectF(centerX-55,centerY+38,centerX+55,centerY+78), 6, 6, ctrlButtonPaint);
+           //canvas.drawRoundRect(new RectF(centerX-64,centerY+45,centerX+64,centerY+105), 6, 6, ctrlButtonPaint);
            // canvas.drawText("Control", centerX, centerY + 65, ctrlButtonPaint);
 
             //ritar upp ikoner och sätter ev. gadgetInFocus=true
@@ -306,6 +314,16 @@ public class
             }
             if (tempInFocus==false) gadgetInFocus=-1; //gadgetId -1 är nullobjekt
 
+
+            //ta bort
+            if (tempClicked==true) {
+                canvas.drawText("Button clicked", centerX, centerY + 30, ctrlButtonPaint);
+            }
+            else if (tempClicked==false) {
+
+                canvas.drawText("Button not clicked", centerX, centerY + 30, ctrlButtonPaint);
+
+            }
 
 
             if (!mAmbient) {
@@ -476,6 +494,23 @@ public class
             }
             return false;
         }
+        @Override
+        public void onTapCommand(
+                @TapType int tapType, int x, int y, long eventTime) {
+
+            if (x<=224 && x >= 96) {
+                if (y>=205 && y<=265){
+                    tempClicked=true;
+                    Log.d("onTapCommand", "tappedButton= " + tempClicked );
+
+                }
+                else tempClicked=false;
+
+            }
+           else tempClicked=false;
+
+            Log.d("onTapCommand", "tappedButton= " + tempClicked );
+        }
     }
 
 
@@ -498,6 +533,7 @@ public class
                 }
             }
         }
+
 
 
     }
