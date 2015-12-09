@@ -222,10 +222,10 @@ public class
             mTime = new Time();
             //en lista med några lampor (gadget(type,id,xpos,ypos))
             gadgetList=new ArrayList<Gadget>();
-            gadgetList.add(new Gadget(0,1,0,3));
-           gadgetList.add(new Gadget(1,2,3,3));
-            gadgetList.add(new Gadget(0,3,3,0));
-            gadgetList.add(new Gadget(0,4,-2,-3));
+            gadgetList.add(new Gadget(0,0,0,3));
+           gadgetList.add(new Gadget(0,1,3,3));
+//            gadgetList.add(new Gadget(1,3,3,0));
+//            gadgetList.add(new Gadget(0,4,-2,-3));
             v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
 
@@ -303,9 +303,11 @@ public class
 
             //ritar upp ikoner och sätter ev. gadgetInFocus=true
             boolean tempInFocus= false; //ändras till true om nåt objekt blir i fokus nedan
+            int focusedGadget = -1;
             for (Gadget g : gadgetList) {
                 float[] coords = getDrawingCoords((float) g.angle, height);
                 if (isGadgetInFocus(g)) {
+                    focusedGadget = g.id;
                     tempInFocus = true;
                     canvas.drawBitmap(iconInFocus[g.type], coords[0], coords[1], mIconPaint); //
                 } else {
@@ -315,15 +317,15 @@ public class
             if (tempInFocus==false) gadgetInFocus=-1; //gadgetId -1 är nullobjekt
 
 
-            //ta bort
-            if (tempClicked==true) {
-                canvas.drawText("Button clicked", centerX, centerY + 30, ctrlButtonPaint);
-            }
-            else if (tempClicked==false) {
-
-                canvas.drawText("Button not clicked", centerX, centerY + 30, ctrlButtonPaint);
-
-            }
+//            //ta bort
+//            if (tempClicked==true) {
+//                canvas.drawText("Button clicked", centerX, centerY + 30, ctrlButtonPaint);
+//            }
+//            else if (tempClicked==false) {
+//
+//                canvas.drawText("Button not clicked", centerX, centerY + 30, ctrlButtonPaint);
+//
+//            }
 
 
             if (!mAmbient) {
