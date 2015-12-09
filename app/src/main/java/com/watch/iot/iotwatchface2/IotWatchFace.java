@@ -20,6 +20,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -42,6 +43,8 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.os.Vibrator;
+import android.widget.Toast;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.TimeZone;
@@ -59,7 +62,7 @@ public class
      */
     private static final long INTERACTIVE_UPDATE_RATE_MS = 10;
     private static final float PI = (float) Math.PI;
-
+    int focusedGadget;
 
     /**
      * Handler message id for updating the time periodically in interactive mode.
@@ -303,7 +306,7 @@ public class
 
             //ritar upp ikoner och sätter ev. gadgetInFocus=true
             boolean tempInFocus= false; //ändras till true om nåt objekt blir i fokus nedan
-            int focusedGadget = -1;
+            focusedGadget = -1;
             for (Gadget g : gadgetList) {
                 float[] coords = getDrawingCoords((float) g.angle, height);
                 if (isGadgetInFocus(g)) {
@@ -502,20 +505,47 @@ public class
 
             if (x<=224 && x >= 96) {
                 if (y>=205 && y<=265){
-                    tempClicked=true;
+//                    tempClicked=true;
+                    if(gadgetInFocus!=-1){
+//                        openApp(getApplicationContext(), "com.watch.iot.iotserver711",gadgetInFocus);
+
+                        Intent sendIntent =   getPackageManager().getLaunchIntentForPackage("com.watch.iot.iotserver711");
+                        sendIntent.putExtra("id", focusedGadget);
+                        startActivity(sendIntent);
+
+
+                    }
                     Log.d("onTapCommand", "tappedButton= " + tempClicked );
 
                 }
-                else tempClicked=false;
+//                else tempClicked=false;
 
             }
-           else tempClicked=false;
+//           else tempClicked=false;
 
             Log.d("onTapCommand", "tappedButton= " + tempClicked );
         }
     }
 
-
+//    public static boolean openApp(Context context, String packageName,int index) {
+//        PackageManager manager = context.getPackageManager();
+//        try {
+//            Intent i = manager.getLaunchIntentForPackage(packageName);
+//            if (i == null) {
+//                //return false;
+//                throw new PackageManager.NameNotFoundException();
+//            }
+//            i.addCategory(Intent.CATEGORY_LAUNCHER);
+//            context.startActivity(i);
+//            // här ska vi lägga till index som värde för appen
+//            i.putExtra("id",1337);
+//            Log.d("Intent called","id: "+index);
+//            return true;
+//        } catch (PackageManager.NameNotFoundException e) {
+//            Toast.makeText(context,"kan inte starta appen",Toast.LENGTH_SHORT).show();
+//            return false;
+//        }
+//    }
 
     private static class EngineHandler extends Handler {
         private final WeakReference<IotWatchFace.Engine> mWeakReference;
